@@ -9,33 +9,33 @@ import UIKit
 
 final class PokemonListViewController: UITableViewController {
 	let pokemonService = PokemonService()
-	var pokemons: [Pokemon] = []
+	var pokemonEntries: [PokemonEntry] = []
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		tableView.register(PokemonCell.self, forCellReuseIdentifier: "PokemonCell")
-		fetchPokemons()
+		fetchPokedex()
 	}
 
-	func fetchPokemons() {
-		pokemonService.fetchPokemons { [weak self] results in
-			self?.pokemons = results
-			DispatchQueue.main.async {
-				self?.tableView.reloadData()
+	func fetchPokedex() {
+		pokemonService.fetchPokedex { [weak self] pokedex in
+			if let pokedex = pokedex {
+				self?.pokemonEntries = pokedex.pokemonEntries
+				DispatchQueue.main.async {
+					self?.tableView.reloadData()
+				}
 			}
 		}
 	}
 
 	override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-		return pokemons.count
+		return pokemonEntries.count
 	}
 
 	override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 		let cell = tableView.dequeueReusableCell(withIdentifier: "PokemonCell", for: indexPath) as! PokemonCell
-		
-		let pokemon = pokemons[indexPath.row]
-		cell.configure(with: pokemon)
-		
+		let pokemonEntry = pokemonEntries[indexPath.row]
+		 cell.configure(with: pokemonEntry)
 		return cell
 	}
 }

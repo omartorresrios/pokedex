@@ -9,22 +9,27 @@ import Foundation
 
 final class PokemonService {
 	
-	func fetchPokemons(completion: @escaping ([Pokemon]) -> Void) {
-		guard let url = URL(string: "https://pokeapi.co/api/v2/pokemon?limit=151") else { return }
-		
+	func fetchPokedex(completion: @escaping (Pokedex?) -> Void) {
+		guard let url = URL(string: "https://pokeapi.co/api/v2/pokedex/1/") else { return }
+
 		URLSession.shared.dataTask(with: url) { data, response, error in
 			if let error = error {
-				print("Error fetching pokemons: \(error)")
+				print("Error fetching pokedex: \(error)")
+				completion(nil)
 				return
 			}
-			
-			guard let data = data else { return }
-			
+
+			guard let data = data else {
+				completion(nil)
+				return
+			}
+
 			do {
-				let pokemons = try JSONDecoder().decode(PokemonList.self, from: data)
-				completion(pokemons.results)
+				let pokedex = try JSONDecoder().decode(Pokedex.self, from: data)
+				completion(pokedex)
 			} catch {
-				print("Error parsing pokemons: \(error)")
+				print("Error parsing pokedex: \(error)")
+				completion(nil)
 			}
 		}.resume()
 	}
