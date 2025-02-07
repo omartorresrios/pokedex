@@ -13,6 +13,9 @@
 		245C17F32D56400F0080B7DB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 245C17F22D56400F0080B7DB /* Assets.xcassets */; };
 		245C17F62D56400F0080B7DB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 245C17F42D56400F0080B7DB /* LaunchScreen.storyboard */; };
 		245C17FE2D56473F0080B7DB /* PokemonCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 245C17FD2D56473F0080B7DB /* PokemonCell.swift */; };
+		245C18002D564D820080B7DB /* Pokemon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 245C17FF2D564D820080B7DB /* Pokemon.swift */; };
+		245C18022D564D910080B7DB /* PokemonList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 245C18012D564D910080B7DB /* PokemonList.swift */; };
+		245C18062D564DBB0080B7DB /* PokemonService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 245C18052D564DBB0080B7DB /* PokemonService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +27,9 @@
 		245C17F52D56400F0080B7DB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		245C17F72D56400F0080B7DB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		245C17FD2D56473F0080B7DB /* PokemonCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokemonCell.swift; sourceTree = "<group>"; };
+		245C17FF2D564D820080B7DB /* Pokemon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pokemon.swift; sourceTree = "<group>"; };
+		245C18012D564D910080B7DB /* PokemonList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokemonList.swift; sourceTree = "<group>"; };
+		245C18052D564DBB0080B7DB /* PokemonService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokemonService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,13 +64,40 @@
 			children = (
 				245C17E92D56400B0080B7DB /* AppDelegate.swift */,
 				245C17EB2D56400B0080B7DB /* SceneDelegate.swift */,
-				245C17ED2D56400B0080B7DB /* PokemonListViewController.swift */,
-				245C17FD2D56473F0080B7DB /* PokemonCell.swift */,
+				245C18072D564DEB0080B7DB /* PokemonList */,
+				245C18042D564DB20080B7DB /* Service */,
+				245C18032D564D9D0080B7DB /* Models */,
 				245C17F22D56400F0080B7DB /* Assets.xcassets */,
 				245C17F42D56400F0080B7DB /* LaunchScreen.storyboard */,
 				245C17F72D56400F0080B7DB /* Info.plist */,
 			);
 			path = Pokedex;
+			sourceTree = "<group>";
+		};
+		245C18032D564D9D0080B7DB /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				245C17FF2D564D820080B7DB /* Pokemon.swift */,
+				245C18012D564D910080B7DB /* PokemonList.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		245C18042D564DB20080B7DB /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				245C18052D564DBB0080B7DB /* PokemonService.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		245C18072D564DEB0080B7DB /* PokemonList */ = {
+			isa = PBXGroup;
+			children = (
+				245C17ED2D56400B0080B7DB /* PokemonListViewController.swift */,
+				245C17FD2D56473F0080B7DB /* PokemonCell.swift */,
+			);
+			path = PokemonList;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -137,10 +170,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				245C18002D564D820080B7DB /* Pokemon.swift in Sources */,
+				245C18062D564DBB0080B7DB /* PokemonService.swift in Sources */,
 				245C17EE2D56400B0080B7DB /* PokemonListViewController.swift in Sources */,
 				245C17FE2D56473F0080B7DB /* PokemonCell.swift in Sources */,
 				245C17EA2D56400B0080B7DB /* AppDelegate.swift in Sources */,
 				245C17EC2D56400B0080B7DB /* SceneDelegate.swift in Sources */,
+				245C18022D564D910080B7DB /* PokemonList.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

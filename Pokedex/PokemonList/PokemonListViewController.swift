@@ -7,18 +7,6 @@
 
 import UIKit
 
-struct PokemonList: Codable {
-	let count: Int
-	let next: String?
-	let previous: String?
-	let results: [Pokemon]
-}
-
-struct Pokemon: Codable {
-	let name: String
-	let url: String
-}
-
 final class PokemonListViewController: UITableViewController {
 	let pokemonService = PokemonService()
 	var pokemons: [Pokemon] = []
@@ -49,28 +37,5 @@ final class PokemonListViewController: UITableViewController {
 		cell.configure(with: pokemon)
 		
 		return cell
-	}
-}
-
-final class PokemonService {
-	
-	func fetchPokemons(completion: @escaping ([Pokemon]) -> Void) {
-		guard let url = URL(string: "https://pokeapi.co/api/v2/pokemon?limit=151") else { return }
-		
-		URLSession.shared.dataTask(with: url) { data, response, error in
-			if let error = error {
-				print("Error fetching pokemons: \(error)")
-				return
-			}
-			
-			guard let data = data else { return }
-			
-			do {
-				let pokemons = try JSONDecoder().decode(PokemonList.self, from: data)
-				completion(pokemons.results)
-			} catch {
-				print("Error parsing pokemons: \(error)")
-			}
-		}.resume()
 	}
 }
