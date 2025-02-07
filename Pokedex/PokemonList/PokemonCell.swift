@@ -20,7 +20,7 @@ final class PokemonCell: UITableViewCell {
 		fatalError("init(coder:) has not been implemented")
 	}
 
-	func setupUI() {
+	private func setupUI() {
 		contentView.addSubview(pokemonImageView)
 		contentView.addSubview(pokemonNameLabel)
 

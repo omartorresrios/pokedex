@@ -13,14 +13,19 @@ final class PokemonListViewController: UITableViewController {
 	private var pokemonEntries: [PokemonEntry] = []
 	private var pokemonImages: [Int: UIImage] = [:]
 	private var cancellables: Set<AnyCancellable> = []
+	private let pokemonCell = "PokemonCell"
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		tableView.register(PokemonCell.self, forCellReuseIdentifier: "PokemonCell")
+		setupTableView()
 		fetchPokedex()
 	}
+	
+	private func setupTableView() {
+		tableView.register(PokemonCell.self, forCellReuseIdentifier: pokemonCell)
+	}
 
-	func fetchPokedex() {
+	private func fetchPokedex() {
 		pokemonService.fetchPokedex()
 			.sink(receiveCompletion: { completion in
 				if case .failure(let error) = completion {
@@ -33,7 +38,7 @@ final class PokemonListViewController: UITableViewController {
 			.store(in: &cancellables)
 	}
 
-	func fetchImages() {
+	private func fetchImages() {
 		for pokemonEntry in pokemonEntries {
 			let pokemonId = pokemonEntry.entryNumber
 
@@ -56,7 +61,7 @@ final class PokemonListViewController: UITableViewController {
 	}
 
 	override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-		let cell = tableView.dequeueReusableCell(withIdentifier: "PokemonCell", for: indexPath) as! PokemonCell
+		let cell = tableView.dequeueReusableCell(withIdentifier: pokemonCell, for: indexPath) as! PokemonCell
 		let pokemonEntry = pokemonEntries[indexPath.row]
 		let pokemonId = pokemonEntry.entryNumber
 		cell.configure(with: pokemonEntry, image: pokemonImages[pokemonId])
