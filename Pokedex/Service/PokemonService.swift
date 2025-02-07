@@ -11,6 +11,7 @@ import UIKit
 protocol PokemonServiceProtocol {
 	func fetchPokedex() -> AnyPublisher<Pokedex, Error>
 	func fetchPokemonImage(for pokemonId: Int) -> AnyPublisher<UIImage, Error>
+	func fetchPokemonDetails(for pokemonId: Int) -> AnyPublisher<PokemonDetails, Error>
 }
 
 class PokemonService: PokemonServiceProtocol {
@@ -40,6 +41,17 @@ class PokemonService: PokemonServiceProtocol {
 				}
 				return image
 			}
+			.eraseToAnyPublisher()
+	}
+	
+	func fetchPokemonDetails(for pokemonId: Int) -> AnyPublisher<PokemonDetails, Error> {
+		guard let url = URL(string: "https://pokeapi.co/api/v2/pokemon/\(pokemonId)") else {
+			return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+		}
+		
+		return URLSession.shared.dataTaskPublisher(for: url)
+			.map(\.data)
+			.decode(type: PokemonDetails.self, decoder: JSONDecoder())
 			.eraseToAnyPublisher()
 	}
 }

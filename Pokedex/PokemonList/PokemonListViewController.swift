@@ -94,6 +94,14 @@ final class PokemonListViewController: UITableViewController {
 		cell.configure(with: pokemonEntry, image: pokemonImages[pokemonId])
 		return cell
 	}
+	
+	override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+		let pokemonEntry = isSearching ? filteredPokemonEntries[indexPath.row] : pokemonEntries[indexPath.row]
+		let pokemonId = pokemonEntry.entryNumber
+		
+		let detailsViewController = PokemonDetailsViewController(pokemonId: pokemonId)
+		navigationController?.pushViewController(detailsViewController, animated: true)
+	}
 }
 
 extension PokemonListViewController: UISearchBarDelegate {
