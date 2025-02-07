@@ -5,32 +5,41 @@
 //  Created by Omar Torres on 2/7/25.
 //
 
-import Foundation
+import Combine
+import UIKit
 
-final class PokemonService {
-	
-	func fetchPokedex(completion: @escaping (Pokedex?) -> Void) {
-		guard let url = URL(string: "https://pokeapi.co/api/v2/pokedex/1/") else { return }
+protocol PokemonServiceProtocol {
+	func fetchPokedex() -> AnyPublisher<Pokedex, Error>
+	func fetchPokemonImage(for pokemonId: Int) -> AnyPublisher<UIImage, Error>
+}
 
-		URLSession.shared.dataTask(with: url) { data, response, error in
-			if let error = error {
-				print("Error fetching pokedex: \(error)")
-				completion(nil)
-				return
+class PokemonService: PokemonServiceProtocol {
+	func fetchPokedex() -> AnyPublisher<Pokedex, Error> {
+		guard let url = URL(string: "https://pokeapi.co/api/v2/pokedex/1/") else {
+			return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+		}
+		
+		return URLSession.shared.dataTaskPublisher(for: url)
+			.map(\.data)
+			.decode(type: Pokedex.self, decoder: JSONDecoder())
+			.eraseToAnyPublisher()
+	}
+
+	func fetchPokemonImage(for pokemonId: Int) -> AnyPublisher<UIImage, Error> {
+		let imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/\(pokemonId).png"
+		
+		guard let url = URL(string: imageUrl) else {
+			return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+		}
+		
+		return URLSession.shared.dataTaskPublisher(for: url)
+			.map(\.data)
+			.tryMap { data in
+				guard let image = UIImage(data: data) else {
+					throw URLError(.badServerResponse)
+				}
+				return image
 			}
-
-			guard let data = data else {
-				completion(nil)
-				return
-			}
-
-			do {
-				let pokedex = try JSONDecoder().decode(Pokedex.self, from: data)
-				completion(pokedex)
-			} catch {
-				print("Error parsing pokedex: \(error)")
-				completion(nil)
-			}
-		}.resume()
+			.eraseToAnyPublisher()
 	}
 }

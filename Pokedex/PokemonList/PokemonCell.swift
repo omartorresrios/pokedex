@@ -39,25 +39,8 @@ final class PokemonCell: UITableViewCell {
 		])
 	}
 	
-	func configure(with pokemonEntry: PokemonEntry) {
+	func configure(with pokemonEntry: PokemonEntry, image: UIImage?) {
 		pokemonNameLabel.text = pokemonEntry.pokemonSpecies.name
-		
-		let pokemonId = pokemonEntry.entryNumber
-		let imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/\(pokemonId).png"
-		
-		guard let url = URL(string: imageUrl) else { return }
-		
-		URLSession.shared.dataTask(with: url) { data, response, error in
-			if let error = error {
-				print("Error fetching image: \(error)")
-				return
-			}
-			
-			guard let data = data else { return }
-			
-			DispatchQueue.main.async { [weak self] in
-				self?.pokemonImageView.image = UIImage(data: data)
-			}
-		}.resume()
+		pokemonImageView.image = image
 	}
 }
