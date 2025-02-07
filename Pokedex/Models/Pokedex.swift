@@ -12,3 +12,18 @@ struct Pokedex: Codable {
 		case pokemonEntries = "pokemon_entries"
 	}
 }
+
+struct PokemonEntry: Codable {
+	let entryNumber: Int
+	let pokemonSpecies: PokemonSpecies
+
+	enum CodingKeys: String, CodingKey {
+		case entryNumber = "entry_number"
+		case pokemonSpecies = "pokemon_species"
+	}
+}
+
+struct PokemonSpecies: Codable {
+	let name: String
+	let url: String
+}

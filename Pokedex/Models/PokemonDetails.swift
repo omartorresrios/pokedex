@@ -12,21 +12,13 @@ struct PokemonDetails: Codable {
 	let stats: [PokemonStat]
 	let sprites: PokemonSprites
 	let moves: [PokemonMove]
+}
+
+struct PokemonType: Codable {
+	let type: PokemonTypeDetail
 	
-	struct PokemonType: Codable {
-		let type: PokemonTypeDetail
-		
-		struct PokemonTypeDetail: Codable {
-			let name: String
-		}
-	}
-	
-	struct PokemonSprites: Codable {
-		let frontDefault: String?
-		
-		enum CodingKeys: String, CodingKey {
-			case frontDefault = "front_default"
-		}
+	struct PokemonTypeDetail: Codable {
+		let name: String
 	}
 }
 
@@ -42,6 +34,14 @@ struct PokemonStat: Codable {
 
 struct PokemonStatDetails: Codable {
 	let name: String
+}
+
+struct PokemonSprites: Codable {
+	let frontDefault: String?
+	
+	enum CodingKeys: String, CodingKey {
+		case frontDefault = "front_default"
+	}
 }
 
 struct PokemonMove: Codable {
