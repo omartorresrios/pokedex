@@ -9,7 +9,7 @@ import UIKit
 import Combine
 
 final class PokemonDetailsViewController: UIViewController {
-	private let pokemonService: PokemonServiceProtocol = PokemonService()
+	private let pokemonService: PokemonServiceProtocol
 	private let pokemonId: Int
 	private var cancellables: Set<AnyCancellable> = []
 	
@@ -19,7 +19,8 @@ final class PokemonDetailsViewController: UIViewController {
 	private let pokemonStatsLabel = UILabel()
 	private let pokemonMovesLabel = UILabel()
 	
-	init(pokemonId: Int) {
+	init(pokemonService: PokemonServiceProtocol, pokemonId: Int) {
+		self.pokemonService = pokemonService
 		self.pokemonId = pokemonId
 		super.init(nibName: nil, bundle: nil)
 	}
@@ -95,8 +96,28 @@ final class PokemonDetailsViewController: UIViewController {
 	
 	private func configureUI(with pokemonDetails: PokemonDetails) {
 		pokemonNameLabel.text = pokemonDetails.name
-		pokemonTypeLabel.text = "Types: \(pokemonDetails.types.map { $0.type.name }.joined(separator: ", "))"
-		pokemonStatsLabel.text = "Stats: \(pokemonDetails.stats.map { "\($0.stat.name): \($0.baseStat)" }.joined(separator: ", "))"
-		pokemonMovesLabel.text = "Moves: \(pokemonDetails.moves.map { $0.move.name }.joined(separator: ", "))"
+		if let types = pokemonDetails.types as? Set<PokemonType> {
+			let typeNames = types.compactMap { $0.type?.name }
+			pokemonTypeLabel.text = "Types: \(typeNames.joined(separator: ", "))"
+		} else {
+			pokemonTypeLabel.text = "Types: N/A"
+		}
+		
+		if let stats = pokemonDetails.stats as? Set<PokemonStat> {
+			let statDescriptions = stats.compactMap { stat -> String? in
+				guard let name = stat.stat?.name else { return nil }
+				return "\(name): \(stat.baseStat)"
+			}
+			pokemonStatsLabel.text = "Stats: \(statDescriptions.joined(separator: ", "))"
+		} else {
+			pokemonStatsLabel.text = "Stats: N/A"
+		}
+
+		if let moves = pokemonDetails.moves as? Set<PokemonMove> {
+			let moveNames = moves.compactMap { $0.move?.name }
+			pokemonMovesLabel.text = "Moves: \(moveNames.joined(separator: ", "))"
+		} else {
+			pokemonMovesLabel.text = "Moves: N/A"
+		}
 	}
 }

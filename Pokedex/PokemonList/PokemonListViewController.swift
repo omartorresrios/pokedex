@@ -9,7 +9,7 @@ import UIKit
 import Combine
 
 final class PokemonListViewController: UITableViewController {
-	private let pokemonService: PokemonServiceProtocol = PokemonService()
+	private let pokemonService: PokemonServiceProtocol
 	private var pokemonEntries: [PokemonEntry] = []
 	private var pokemonImages: [Int: UIImage] = [:]
 	private var cancellables: Set<AnyCancellable> = []
@@ -17,6 +17,15 @@ final class PokemonListViewController: UITableViewController {
 	private let searchBar = UISearchBar()
 	private var filteredPokemonEntries: [PokemonEntry] = []
 	private var isSearching = false
+	
+	init(pokemonService: PokemonServiceProtocol) {
+		self.pokemonService = pokemonService
+		super.init(nibName: nil, bundle: nil)
+	}
+	
+	required init?(coder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -99,7 +108,8 @@ final class PokemonListViewController: UITableViewController {
 		let pokemonEntry = isSearching ? filteredPokemonEntries[indexPath.row] : pokemonEntries[indexPath.row]
 		let pokemonId = pokemonEntry.entryNumber
 		
-		let detailsViewController = PokemonDetailsViewController(pokemonId: pokemonId)
+		let detailsViewController = PokemonDetailsViewController(pokemonService: pokemonService,
+																 pokemonId: pokemonId)
 		navigationController?.pushViewController(detailsViewController, animated: true)
 	}
 }

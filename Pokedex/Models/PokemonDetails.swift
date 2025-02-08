@@ -5,16 +5,16 @@
 //  Created by Omar Torres on 2/7/25.
 //
 
-struct PokemonDetails: Codable {
+struct PokemonDetailsResponse: Codable {
 	let id: Int
 	let name: String
-	let types: [PokemonType]
-	let stats: [PokemonStat]
-	let sprites: PokemonSprites
-	let moves: [PokemonMove]
+	let types: [PokemonTypeResponse]
+	let stats: [PokemonStatResponse]
+	let sprites: PokemonSpritesResponse
+	let moves: [PokemonMoveResponse]
 }
 
-struct PokemonType: Codable {
+struct PokemonTypeResponse: Codable {
 	let type: PokemonTypeDetail
 	
 	struct PokemonTypeDetail: Codable {
@@ -22,8 +22,8 @@ struct PokemonType: Codable {
 	}
 }
 
-struct PokemonStat: Codable {
-	let stat: PokemonStatDetails
+struct PokemonStatResponse: Codable {
+	let stat: PokemonStatDetailsResponse
 	let baseStat: Int
 	
 	enum CodingKeys: String, CodingKey {
@@ -32,11 +32,11 @@ struct PokemonStat: Codable {
 	}
 }
 
-struct PokemonStatDetails: Codable {
+struct PokemonStatDetailsResponse: Codable {
 	let name: String
 }
 
-struct PokemonSprites: Codable {
+struct PokemonSpritesResponse: Codable {
 	let frontDefault: String?
 	
 	enum CodingKeys: String, CodingKey {
@@ -44,10 +44,10 @@ struct PokemonSprites: Codable {
 	}
 }
 
-struct PokemonMove: Codable {
-	let move: PokemonMoveDetails
+struct PokemonMoveResponse: Codable {
+	let move: PokemonMoveDetailsResponse
 }
 
-struct PokemonMoveDetails: Codable {
+struct PokemonMoveDetailsResponse: Codable {
 	let name: String
 }
