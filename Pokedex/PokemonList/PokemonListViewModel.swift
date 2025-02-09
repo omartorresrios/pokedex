@@ -9,22 +9,22 @@ import Foundation
 import Combine
 
 final class PokemonListViewModel: NSObject {
-	private let pokemonService: PokemonServiceProtocol
+	private let service: PokemonListServiceProtocol
 	
-	init(pokemonService: PokemonServiceProtocol) {
-		self.pokemonService = pokemonService
+	init(service: PokemonListServiceProtocol) {
+		self.service = service
 	}
 	
 	func fetchPokedex() -> AnyPublisher<PokedexResponse, Error> {
-		pokemonService.fetchPokedex()
+		service.fetchPokedex()
 	}
 	
 	func fetchLocalPokedex(completion: @escaping fetchPokedexCompletion) {
-		pokemonService.fetchLocalPokedex(completion: completion)
+		service.fetchLocalPokedex(completion: completion)
 	}
 	
 	func fetchSearchRequest(_ searchText: String,
 							completion: @escaping FetchSearhCompletion) {
-		pokemonService.fetchSearchRequest(searchText, completion: completion)
+		service.fetchSearchRequest(searchText, completion: completion)
 	}
 }

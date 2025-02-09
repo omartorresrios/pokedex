@@ -8,18 +8,18 @@
 import Combine
 
 final class PokemonDetailsViewModel {
-	private let pokemonService: PokemonServiceProtocol
+	private let service: PokemonDetailsServiceProtocol
 	
-	init(pokemonService: PokemonServiceProtocol) {
-		self.pokemonService = pokemonService
+	init(service: PokemonDetailsServiceProtocol) {
+		self.service = service
 	}
 	
 	func fetchPokemonDetails(for pokemonId: String) -> AnyPublisher<PokemonDetailsResponse, Error> {
-		pokemonService.fetchPokemonDetails(for: pokemonId)
+		service.fetchPokemonDetails(for: pokemonId)
 	}
 	
 	func fetchLocalPokemonDetails(with id: String, 
 								  completion: @escaping FetchPokemonDetailsCompletion) {
-		pokemonService.fetchLocalPokemonDetails(with: id, completion: completion)
+		service.fetchLocalPokemonDetails(with: id, completion: completion)
 	}
 }

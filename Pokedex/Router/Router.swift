@@ -13,16 +13,17 @@ protocol Router {
 
 final class NavigationControllerRouter: Router {
 	private let navigationController: UINavigationController
-	private let pokemonService: PokemonService
+	private let pokemonDetailsService: PokemonDetailsService
 	
-	init(navigationController: UINavigationController, pokemonService: PokemonService) {
+	init(navigationController: UINavigationController,
+		 pokemonDetailsService: PokemonDetailsService) {
 		self.navigationController = navigationController
-		self.pokemonService = pokemonService
+		self.pokemonDetailsService = pokemonDetailsService
 	}
 	
 	func showPostDetailsView(pokemonId: String, pokemonImagePath: String?) {
-		let viewModel = PokemonDetailsViewModel(pokemonService: pokemonService)
-		let pokemonDetailsViewController = PokemonDetailsViewController(viewModel: viewModel, 
+		let viewModel = PokemonDetailsViewModel(service: pokemonDetailsService)
+		let pokemonDetailsViewController = PokemonDetailsViewController(viewModel: viewModel,
 																		pokemonId: pokemonId,
 																		pokemonImagePath: pokemonImagePath)
 		navigationController.pushViewController(pokemonDetailsViewController, animated: true)
