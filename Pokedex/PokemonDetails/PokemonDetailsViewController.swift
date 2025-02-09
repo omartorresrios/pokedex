@@ -10,7 +10,8 @@ import Combine
 
 final class PokemonDetailsViewController: UIViewController {
 	private let viewModel: PokemonDetailsViewModel
-	private let pokemonId: Int
+	private let pokemonId: String
+	private let pokemonImagePath: String?
 	private var cancellables: Set<AnyCancellable> = []
 	
 	private let pokemonImageView = UIImageView()
@@ -19,9 +20,12 @@ final class PokemonDetailsViewController: UIViewController {
 	private let pokemonStatsLabel = UILabel()
 	private let pokemonMovesLabel = UILabel()
 	
-	init(viewModel: PokemonDetailsViewModel, pokemonId: Int) {
+	init(viewModel: PokemonDetailsViewModel,
+		 pokemonId: String,
+		 pokemonImagePath: String?) {
 		self.viewModel = viewModel
 		self.pokemonId = pokemonId
+		self.pokemonImagePath = pokemonImagePath
 		super.init(nibName: nil, bundle: nil)
 	}
 	
@@ -32,7 +36,7 @@ final class PokemonDetailsViewController: UIViewController {
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		setupUI()
-		fetchPokemonDetails()
+		fetchRemotePokemonDetails()
 	}
 	
 	private func setupUI() {
@@ -81,21 +85,44 @@ final class PokemonDetailsViewController: UIViewController {
 		pokemonImageView.contentMode = .scaleAspectFit
 	}
 	
-	private func fetchPokemonDetails() {
+	private func fetchRemotePokemonDetails() {
 		viewModel.fetchPokemonDetails(for: pokemonId)
 			.receive(on: DispatchQueue.main)
-			.sink(receiveCompletion: { completion in
+			.sink(receiveCompletion: { [weak self] completion in
 				if case .failure(let error) = completion {
 					print("Error fetching pokemon details: \(error)")
+					self?.fetchLocalPokemonDetails()
 				}
 			}, receiveValue: { [weak self] pokemonDetails in
-				self?.configureUI(with: pokemonDetails)
+				self?.fetchLocalPokemonDetails()
 			})
 			.store(in: &cancellables)
 	}
 	
+	private func fetchLocalPokemonDetails() {
+		viewModel.fetchLocalPokemonDetails(with: pokemonId) { [weak self] result in
+			guard let self = self else { return }
+			switch result {
+			case .success(let pokemon):
+				self.configureUI(with: pokemon)
+			case .failure(let error):
+				print("show some error message: \(error)")
+			}
+		}
+	}
+	
 	private func configureUI(with pokemonDetails: PokemonDetails) {
 		pokemonNameLabel.text = pokemonDetails.name
+		if let fileName = pokemonImagePath,
+		   let documentsDirectory = FileManager.default.urls(for: .documentDirectory,
+															 in: .userDomainMask).first {
+			let fileURL = documentsDirectory.appendingPathComponent(fileName)
+			if FileManager.default.fileExists(atPath: fileURL.path),
+			   let image = UIImage(contentsOfFile: fileURL.path) {
+					pokemonImageView.image = image
+			}
+		}
+		
 		if let types = pokemonDetails.types as? Set<PokemonType> {
 			let typeNames = types.compactMap { $0.type?.name }
 			pokemonTypeLabel.text = "Types: \(typeNames.joined(separator: ", "))"

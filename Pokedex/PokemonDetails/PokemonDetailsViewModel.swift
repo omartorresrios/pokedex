@@ -14,7 +14,12 @@ final class PokemonDetailsViewModel {
 		self.pokemonService = pokemonService
 	}
 	
-	func fetchPokemonDetails(for pokemonId: Int) -> AnyPublisher<PokemonDetails, Error> {
+	func fetchPokemonDetails(for pokemonId: String) -> AnyPublisher<PokemonDetailsResponse, Error> {
 		pokemonService.fetchPokemonDetails(for: pokemonId)
+	}
+	
+	func fetchLocalPokemonDetails(with id: String, 
+								  completion: @escaping FetchPokemonDetailsCompletion) {
+		pokemonService.fetchLocalPokemonDetails(with: id, completion: completion)
 	}
 }

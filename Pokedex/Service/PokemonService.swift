@@ -9,10 +9,19 @@ import Combine
 import UIKit
 import CoreData
 
+typealias FetchPokemonDetailsCompletion = (Result<PokemonDetails, FetchError>) -> Void
+typealias fetchPokedexCompletion = (Result<[PokemonEntry], FetchError>) -> Void
+typealias FetchSearhCompletion = (Result<[PokemonEntry], FetchError>) -> Void
+
 protocol PokemonServiceProtocol {
 	var viewContext: NSManagedObjectContext { get }
 	func fetchPokedex() -> AnyPublisher<PokedexResponse, Error>
-	func fetchPokemonDetails(for pokemonId: Int) -> AnyPublisher<PokemonDetails, Error>
+	func fetchPokemonDetails(for pokemonId: String) -> AnyPublisher<PokemonDetailsResponse, Error>
+	func fetchLocalPokedex(completion: @escaping fetchPokedexCompletion)
+	func fetchSearchRequest(_ searchText: String,
+							completion: @escaping FetchSearhCompletion)
+	func fetchLocalPokemonDetails(with id: String,
+								  completion: @escaping FetchPokemonDetailsCompletion)
 }
 
 class PokemonService: PokemonServiceProtocol {
@@ -149,7 +158,6 @@ class PokemonService: PokemonServiceProtocol {
 		
 		do {
 			try imageData.write(to: fileURL)
-			print("Image successfully saved at \(fileURL.path)")
 			entry.imagePath = fileName
 		} catch {
 			print("Error saving image: \(error)")
@@ -198,7 +206,7 @@ class PokemonService: PokemonServiceProtocol {
 			.eraseToAnyPublisher()
 	}
 	
-	func fetchPokemonDetails(for pokemonId: Int) -> AnyPublisher<PokemonDetails, Error> {
+	func fetchPokemonDetails(for pokemonId: String) -> AnyPublisher<PokemonDetailsResponse, Error> {
 		guard let url = URL(string: "https://pokeapi.co/api/v2/pokemon/\(pokemonId)") else {
 			return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
 		}
@@ -209,40 +217,7 @@ class PokemonService: PokemonServiceProtocol {
 			.handleEvents(receiveOutput: { [weak self] response in
 				self?.savePokemonDetailsToCoreData(response)
 			})
-			.flatMap { [weak self] response -> AnyPublisher<PokemonDetails, Error> in
-				guard let self = self else {
-					return Fail(error: URLError(.cannotFindHost)).eraseToAnyPublisher()
-				}
-				
-				return self.fetchPokemonFromCoreData(with: response.id)
-			}
 			.eraseToAnyPublisher()
-	}
-	
-	private func fetchPokemonFromCoreData(with id: Int) -> AnyPublisher<PokemonDetails, Error> {
-		Future { [weak self] promise in
-			guard let self = self else {
-				return promise(.failure(NSError(domain: "CoreDataError",
-												code: NSValidationMissingMandatoryPropertyError,
-												userInfo: [NSLocalizedDescriptionKey: "Core Data manager instance is unavailable."])))
-			}
-			let context = self.coreDataManager.container.viewContext
-			let fetchRequest: NSFetchRequest<PokemonDetails> = PokemonDetails.fetchRequest()
-			fetchRequest.predicate = NSPredicate(format: "id == %d", id)
-
-			do {
-				if let pokemon = try context.fetch(fetchRequest).first {
-					promise(.success(pokemon))
-				} else {
-					promise(.failure(NSError(domain: "CoreDataError", 
-											 code: 404,
-											 userInfo: [NSLocalizedDescriptionKey: "Pokemon not found"])))
-				}
-			} catch {
-				promise(.failure(error))
-			}
-		}
-		.eraseToAnyPublisher()
 	}
 
 	private func savePokemonDetailsToCoreData(_ response: PokemonDetailsResponse) {
@@ -289,6 +264,52 @@ class PokemonService: PokemonServiceProtocol {
 			try context.save()
 		} catch {
 			print("Error saving Pokemon details: \(error)")
+		}
+	}
+	
+	func fetchLocalPokedex(completion: @escaping fetchPokedexCompletion) {
+		let context = viewContext
+		let fetchRequest: NSFetchRequest<PokemonEntry> = PokemonEntry.fetchRequest()
+		fetchRequest.sortDescriptors = [NSSortDescriptor(key: "entryNumber", ascending: true)]
+		
+		context.perform {
+			do {
+				let pokemonEntries = try context.fetch(fetchRequest)
+				completion(.success(pokemonEntries))
+			} catch {
+				completion(.failure(.dataFetchError))
+			}
+		}
+	}
+	
+	func fetchSearchRequest(_ searchText: String,
+							completion: @escaping FetchSearhCompletion) {
+		let fetchRequest: NSFetchRequest<PokemonEntry> = PokemonEntry.fetchRequest()
+		fetchRequest.predicate = NSPredicate(format: "pokemonSpecies.name CONTAINS[cd] %@", searchText)
+		fetchRequest.sortDescriptors = [NSSortDescriptor(key: "entryNumber", ascending: true)]
+		
+		do {
+			let searchResults = try viewContext.fetch(fetchRequest)
+			completion(.success(searchResults))
+		} catch {
+			print("Error filtering: \(error)")
+		}
+	}
+	
+	func fetchLocalPokemonDetails(with id: String,
+								  completion: @escaping FetchPokemonDetailsCompletion) {
+		let context = viewContext
+		let fetchRequest: NSFetchRequest<PokemonDetails> = PokemonDetails.fetchRequest()
+		fetchRequest.predicate = NSPredicate(format: "id == %@", id)
+		
+		context.perform {
+			do {
+				if let pokemon = try context.fetch(fetchRequest).first {
+					completion(.success(pokemon))
+				}
+			} catch {
+				completion(.failure(.dataFetchError))
+			}
 		}
 	}
 }

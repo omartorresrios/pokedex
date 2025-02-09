@@ -10,6 +10,7 @@ import Combine
 
 final class PokemonListViewController: UITableViewController {
 	private let viewModel: PokemonListViewModel
+	private let router: Router
 	private var pokemonEntries: [PokemonEntry] = []
 	private var pokemonImages: [Int: UIImage] = [:]
 	private var cancellables: Set<AnyCancellable> = []
@@ -18,8 +19,9 @@ final class PokemonListViewController: UITableViewController {
 	private var filteredPokemonEntries: [PokemonEntry] = []
 	private var isSearching = false
 	
-	init(viewModel: PokemonListViewModel) {
+	init(viewModel: PokemonListViewModel, router: Router) {
 		self.viewModel = viewModel
+		self.router = router
 		super.init(nibName: nil, bundle: nil)
 	}
 	
@@ -110,10 +112,8 @@ final class PokemonListViewController: UITableViewController {
 	
 	override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 		let pokemonEntry = isSearching ? filteredPokemonEntries[indexPath.row] : pokemonEntries[indexPath.row]
-		// TO-DO: Create a router to handle navigation and inject service component.
-//		let pokemonId = pokemonEntry.entryNumber
-//		let detailsViewController = PokemonDetailsViewController(pokemonId: pokemonId)
-//		navigationController?.pushViewController(detailsViewController, animated: true)
+		router.showPostDetailsView(pokemonId: "\(pokemonEntry.entryNumber)", 
+								   pokemonImagePath: pokemonEntry.imagePath)
 	}
 }
 
