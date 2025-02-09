@@ -43,7 +43,7 @@ final class PokemonListViewModel: NSObject {
 	func fetchSearchRequest(_ searchText: String,
 							completion: @escaping (Result<[PokemonEntry], FetchError>) -> Void) {
 		let fetchRequest: NSFetchRequest<PokemonEntry> = PokemonEntry.fetchRequest()
-		fetchRequest.predicate = NSPredicate(format: "name CONTAINS[cd] %@", searchText)
+		fetchRequest.predicate = NSPredicate(format: "pokemonSpecies.name CONTAINS[cd] %@", searchText)
 		fetchRequest.sortDescriptors = [NSSortDescriptor(key: "entryNumber", ascending: true)]
 		
 		do {
