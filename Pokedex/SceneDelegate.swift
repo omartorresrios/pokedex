@@ -16,7 +16,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 		window = UIWindow(windowScene: windowScene)
 		let coreDataManager = CoreDataManager()
 		let pokemonService = PokemonService(coreDataManager: coreDataManager)
-		let pokemonListViewController = PokemonListViewController(pokemonService: pokemonService)
+		let viewModel = PokemonListViewModel(pokemonService: pokemonService)
+		let pokemonListViewController = PokemonListViewController(viewModel: viewModel)
 		let navigationController = UINavigationController(rootViewController: pokemonListViewController)
 		window?.rootViewController = navigationController
 		window?.makeKeyAndVisible()

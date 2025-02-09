@@ -23,7 +23,7 @@ final class CoreDataManager: CoreDataManagerProtocol {
 		}
 	}
 	
-	let container: NSPersistentContainer
+	var container: NSPersistentContainer
 	
 	func save() {
 		let context = container.viewContext

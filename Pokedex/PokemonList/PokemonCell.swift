@@ -39,8 +39,28 @@ final class PokemonCell: UITableViewCell {
 		])
 	}
 	
-	func configure(with pokemonEntry: PokemonEntry, image: UIImage?) {
-		pokemonNameLabel.text = pokemonEntry.pokemonSpecies.name
+	func configure(with pokemonEntry: PokemonEntry) {
+		if let fileName = pokemonEntry.imagePath,
+		   let documentsDirectory = FileManager.default.urls(for: .documentDirectory,
+															 in: .userDomainMask).first {
+			let fileURL = documentsDirectory.appendingPathComponent(fileName)
+			
+			if FileManager.default.fileExists(atPath: fileURL.path) {
+				if let image = UIImage(contentsOfFile: fileURL.path) {
+					setValues(pokemonEntry.pokemonSpecies?.name, image)
+				} else {
+					setValues(pokemonEntry.pokemonSpecies?.name, nil)
+				}
+			} else {
+				setValues(pokemonEntry.pokemonSpecies?.name, nil)
+			}
+		} else {
+			setValues(pokemonEntry.pokemonSpecies?.name, nil)
+		}
+	}
+	
+	private func setValues(_ name: String?, _ image: UIImage? = nil) {
+		pokemonNameLabel.text = name
 		pokemonImageView.image = image
 	}
 }

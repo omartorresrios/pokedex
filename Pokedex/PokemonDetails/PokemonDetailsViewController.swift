@@ -9,7 +9,7 @@ import UIKit
 import Combine
 
 final class PokemonDetailsViewController: UIViewController {
-	private let pokemonService: PokemonServiceProtocol
+	private let viewModel: PokemonDetailsViewModel
 	private let pokemonId: Int
 	private var cancellables: Set<AnyCancellable> = []
 	
@@ -19,8 +19,8 @@ final class PokemonDetailsViewController: UIViewController {
 	private let pokemonStatsLabel = UILabel()
 	private let pokemonMovesLabel = UILabel()
 	
-	init(pokemonService: PokemonServiceProtocol, pokemonId: Int) {
-		self.pokemonService = pokemonService
+	init(viewModel: PokemonDetailsViewModel, pokemonId: Int) {
+		self.viewModel = viewModel
 		self.pokemonId = pokemonId
 		super.init(nibName: nil, bundle: nil)
 	}
@@ -82,7 +82,7 @@ final class PokemonDetailsViewController: UIViewController {
 	}
 	
 	private func fetchPokemonDetails() {
-		pokemonService.fetchPokemonDetails(for: pokemonId)
+		viewModel.fetchPokemonDetails(for: pokemonId)
 			.receive(on: DispatchQueue.main)
 			.sink(receiveCompletion: { completion in
 				if case .failure(let error) = completion {
