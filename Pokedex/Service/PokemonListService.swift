@@ -34,6 +34,10 @@ class PokemonListService: PokemonListServiceProtocol {
 		return URLSession.shared.dataTaskPublisher(for: url)
 			.map(\.data)
 			.decode(type: PokedexResponse.self, decoder: JSONDecoder())
+			.map { response -> PokedexResponse in
+				let limitedEntries = Array(response.pokemonEntries.prefix(150))
+				return PokedexResponse(pokemonEntries: limitedEntries)
+			}
 			.flatMap { [weak self] response -> AnyPublisher<PokedexResponse, Error> in
 				guard let self = self else {
 					return Fail(error: URLError(.unknown)).eraseToAnyPublisher()
