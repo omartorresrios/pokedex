@@ -14,8 +14,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 	func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
 		guard let windowScene = (scene as? UIWindowScene) else { return }
 		window = UIWindow(windowScene: windowScene)
-		let pokemonListViewController = PokemonListViewController()
-		let navigationController = UINavigationController(rootViewController: pokemonListViewController)
+		let coreDataManager = CoreDataManager()
+		let pokemonService = PokemonListService(coreDataManager: coreDataManager)
+		let viewModel = PokemonListViewModel(service: pokemonService)
+		let navigationController = UINavigationController()
+		let pokemonDetailsService = PokemonDetailsService(coreDataManager: coreDataManager)
+		let router = NavigationControllerRouter(navigationController: navigationController,
+												pokemonDetailsService: pokemonDetailsService)
+		let pokemonListViewController = PokemonListViewController(viewModel: viewModel, router: router)
+		navigationController.pushViewController(pokemonListViewController, animated: true)
 		window?.rootViewController = navigationController
 		window?.makeKeyAndVisible()
 	}

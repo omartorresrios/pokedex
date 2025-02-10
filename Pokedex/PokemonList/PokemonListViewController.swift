@@ -9,7 +9,8 @@ import UIKit
 import Combine
 
 final class PokemonListViewController: UITableViewController {
-	private let pokemonService: PokemonServiceProtocol = PokemonService()
+	private let viewModel: PokemonListViewModel
+	private let router: Router
 	private var pokemonEntries: [PokemonEntry] = []
 	private var pokemonImages: [Int: UIImage] = [:]
 	private var cancellables: Set<AnyCancellable> = []
@@ -18,17 +19,27 @@ final class PokemonListViewController: UITableViewController {
 	private var filteredPokemonEntries: [PokemonEntry] = []
 	private var isSearching = false
 	
+	init(viewModel: PokemonListViewModel, router: Router) {
+		self.viewModel = viewModel
+		self.router = router
+		super.init(nibName: nil, bundle: nil)
+	}
+	
+	required init?(coder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
+	
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		setupTableView()
 		setupSearchBar()
-		fetchPokedex()
+		fetchRemotePokedex()
 	}
 	
 	private func setupTableView() {
 		tableView.register(PokemonCell.self, forCellReuseIdentifier: pokemonCell)
 	}
-
+	
 	private func setupSearchBar() {
 		searchBar.delegate = self
 		searchBar.placeholder = "Search Pokémon"
@@ -37,50 +48,55 @@ final class PokemonListViewController: UITableViewController {
 		tableView.tableHeaderView = searchBar
 	}
 	
-	private func fetchPokedex() {
-		pokemonService.fetchPokedex()
-			.sink(receiveCompletion: { completion in
+	private func fetchRemotePokedex() {
+		viewModel.fetchPokedex()
+			.receive(on: DispatchQueue.main)
+			.sink(receiveCompletion: { [weak self] completion in
 				if case .failure(let error) = completion {
 					print("Error fetching pokedex: \(error)")
+					self?.fetchLocalPokedex()
 				}
 			}, receiveValue: { [weak self] pokedex in
-				self?.pokemonEntries = pokedex.pokemonEntries
-				self?.fetchImages(for: pokedex.pokemonEntries)
+				self?.fetchLocalPokedex()
 			})
 			.store(in: &cancellables)
 	}
-
-	private func fetchImages(for entries: [PokemonEntry]) {
-		for pokemonEntry in entries {
-			let pokemonId = pokemonEntry.entryNumber
-
-			pokemonService.fetchPokemonImage(for: pokemonId)
-				.receive(on: DispatchQueue.main)
-				.sink(receiveCompletion: { completion in
-					if case .failure(let error) = completion {
-						print("Error fetching image for \(pokemonId): \(error)")
-					}
-				}, receiveValue: { [weak self] image in
-					self?.pokemonImages[pokemonId] = image
-					self?.tableView.reloadData()
-				})
-				.store(in: &cancellables)
+	
+	private func fetchLocalPokedex() {
+		viewModel.fetchLocalPokedex { [weak self] result in
+			guard let self = self else { return }
+			switch result {
+			case .success(let entries):
+				self.pokemonEntries = entries
+				DispatchQueue.main.async {
+					self.tableView.reloadData()
+				}
+			case .failure(let error):
+				print("show some error message: \(error)")
+			}
 		}
 	}
 
 	private func filterPokemons(searchText: String) {
 		if searchText.isEmpty {
 			isSearching = false
-			filteredPokemonEntries = []
-			tableView.reloadData()
+			fetchLocalPokedex()
 			return
 		}
 
 		isSearching = true
-		filteredPokemonEntries = pokemonEntries.filter { entry in
-			entry.pokemonSpecies.name.localizedCaseInsensitiveContains(searchText)
+		viewModel.fetchSearchRequest(searchText) { [weak self] result in
+			guard let self = self else { return }
+			switch result {
+			case .success(let entries):
+				filteredPokemonEntries = entries
+				DispatchQueue.main.async {
+					self.tableView.reloadData()
+				}
+			case .failure(let error):
+				print("show some error message: \(error)")
+			}
 		}
-		tableView.reloadData()
 	}
 	
 	override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -90,17 +106,14 @@ final class PokemonListViewController: UITableViewController {
 	override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 		let cell = tableView.dequeueReusableCell(withIdentifier: pokemonCell, for: indexPath) as! PokemonCell
 		let pokemonEntry = isSearching ? filteredPokemonEntries[indexPath.row] : pokemonEntries[indexPath.row]
-		let pokemonId = pokemonEntry.entryNumber
-		cell.configure(with: pokemonEntry, image: pokemonImages[pokemonId])
+		cell.configure(with: pokemonEntry)
 		return cell
 	}
 	
 	override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 		let pokemonEntry = isSearching ? filteredPokemonEntries[indexPath.row] : pokemonEntries[indexPath.row]
-		let pokemonId = pokemonEntry.entryNumber
-		
-		let detailsViewController = PokemonDetailsViewController(pokemonId: pokemonId)
-		navigationController?.pushViewController(detailsViewController, animated: true)
+		router.showPostDetailsView(pokemonId: "\(pokemonEntry.entryNumber)", 
+								   pokemonImagePath: pokemonEntry.imagePath)
 	}
 }
 

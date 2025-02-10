@@ -5,17 +5,17 @@
 //  Created by Omar Torres on 2/7/25.
 //
 
-struct Pokedex: Codable {
-	let pokemonEntries: [PokemonEntry]
+struct PokedexResponse: Codable {
+	let pokemonEntries: [PokemonEntryResponse]
 
 	enum CodingKeys: String, CodingKey {
 		case pokemonEntries = "pokemon_entries"
 	}
 }
 
-struct PokemonEntry: Codable {
+struct PokemonEntryResponse: Codable {
 	let entryNumber: Int
-	let pokemonSpecies: PokemonSpecies
+	let pokemonSpecies: PokemonSpeciesResponse
 
 	enum CodingKeys: String, CodingKey {
 		case entryNumber = "entry_number"
@@ -23,7 +23,7 @@ struct PokemonEntry: Codable {
 	}
 }
 
-struct PokemonSpecies: Codable {
+struct PokemonSpeciesResponse: Codable {
 	let name: String
 	let url: String
 }

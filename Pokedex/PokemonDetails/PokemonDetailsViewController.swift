@@ -9,8 +9,9 @@ import UIKit
 import Combine
 
 final class PokemonDetailsViewController: UIViewController {
-	private let pokemonService: PokemonServiceProtocol = PokemonService()
-	private let pokemonId: Int
+	private let viewModel: PokemonDetailsViewModel
+	private let pokemonId: String
+	private let pokemonImagePath: String?
 	private var cancellables: Set<AnyCancellable> = []
 	
 	private let pokemonImageView = UIImageView()
@@ -19,8 +20,12 @@ final class PokemonDetailsViewController: UIViewController {
 	private let pokemonStatsLabel = UILabel()
 	private let pokemonMovesLabel = UILabel()
 	
-	init(pokemonId: Int) {
+	init(viewModel: PokemonDetailsViewModel,
+		 pokemonId: String,
+		 pokemonImagePath: String?) {
+		self.viewModel = viewModel
 		self.pokemonId = pokemonId
+		self.pokemonImagePath = pokemonImagePath
 		super.init(nibName: nil, bundle: nil)
 	}
 	
@@ -31,7 +36,7 @@ final class PokemonDetailsViewController: UIViewController {
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		setupUI()
-		fetchPokemonDetails()
+		fetchRemotePokemonDetails()
 	}
 	
 	private func setupUI() {
@@ -80,23 +85,66 @@ final class PokemonDetailsViewController: UIViewController {
 		pokemonImageView.contentMode = .scaleAspectFit
 	}
 	
-	private func fetchPokemonDetails() {
-		pokemonService.fetchPokemonDetails(for: pokemonId)
+	private func fetchRemotePokemonDetails() {
+		viewModel.fetchPokemonDetails(for: pokemonId)
 			.receive(on: DispatchQueue.main)
-			.sink(receiveCompletion: { completion in
+			.sink(receiveCompletion: { [weak self] completion in
 				if case .failure(let error) = completion {
 					print("Error fetching pokemon details: \(error)")
+					self?.fetchLocalPokemonDetails()
 				}
 			}, receiveValue: { [weak self] pokemonDetails in
-				self?.configureUI(with: pokemonDetails)
+				self?.fetchLocalPokemonDetails()
 			})
 			.store(in: &cancellables)
 	}
 	
+	private func fetchLocalPokemonDetails() {
+		viewModel.fetchLocalPokemonDetails(with: pokemonId) { [weak self] result in
+			guard let self = self else { return }
+			switch result {
+			case .success(let pokemon):
+				self.configureUI(with: pokemon)
+			case .failure(let error):
+				print("show some error message: \(error)")
+			}
+		}
+	}
+	
 	private func configureUI(with pokemonDetails: PokemonDetails) {
 		pokemonNameLabel.text = pokemonDetails.name
-		pokemonTypeLabel.text = "Types: \(pokemonDetails.types.map { $0.type.name }.joined(separator: ", "))"
-		pokemonStatsLabel.text = "Stats: \(pokemonDetails.stats.map { "\($0.stat.name): \($0.baseStat)" }.joined(separator: ", "))"
-		pokemonMovesLabel.text = "Moves: \(pokemonDetails.moves.map { $0.move.name }.joined(separator: ", "))"
+		if let fileName = pokemonImagePath,
+		   let documentsDirectory = FileManager.default.urls(for: .documentDirectory,
+															 in: .userDomainMask).first {
+			let fileURL = documentsDirectory.appendingPathComponent(fileName)
+			if FileManager.default.fileExists(atPath: fileURL.path),
+			   let image = UIImage(contentsOfFile: fileURL.path) {
+					pokemonImageView.image = image
+			}
+		}
+		
+		if let types = pokemonDetails.types as? Set<PokemonType> {
+			let typeNames = types.compactMap { $0.type?.name }
+			pokemonTypeLabel.text = "Types: \(typeNames.joined(separator: ", "))"
+		} else {
+			pokemonTypeLabel.text = "Types: N/A"
+		}
+		
+		if let stats = pokemonDetails.stats as? Set<PokemonStat> {
+			let statDescriptions = stats.compactMap { stat -> String? in
+				guard let name = stat.stat?.name else { return nil }
+				return "\(name): \(stat.baseStat)"
+			}
+			pokemonStatsLabel.text = "Stats: \(statDescriptions.joined(separator: ", "))"
+		} else {
+			pokemonStatsLabel.text = "Stats: N/A"
+		}
+
+		if let moves = pokemonDetails.moves as? Set<PokemonMove> {
+			let moveNames = moves.compactMap { $0.move?.name }
+			pokemonMovesLabel.text = "Moves: \(moveNames.joined(separator: ", "))"
+		} else {
+			pokemonMovesLabel.text = "Moves: N/A"
+		}
 	}
 }
