@@ -12,12 +12,11 @@ final class PokemonListViewController: UITableViewController {
 	private let viewModel: PokemonListViewModel
 	private let router: Router
 	private var pokemonEntries: [PokemonEntry] = []
-	private var pokemonImages: [Int: UIImage] = [:]
-	private var cancellables: Set<AnyCancellable> = []
-	private let pokemonCell = "PokemonCell"
-	private let searchBar = UISearchBar()
 	private var filteredPokemonEntries: [PokemonEntry] = []
+	private let searchBar = UISearchBar()
+	private let pokemonCell = "PokemonCell"
 	private var isSearching = false
+	private var cancellables: Set<AnyCancellable> = []
 	
 	init(viewModel: PokemonListViewModel, router: Router) {
 		self.viewModel = viewModel
@@ -52,8 +51,7 @@ final class PokemonListViewController: UITableViewController {
 		viewModel.fetchPokedex()
 			.receive(on: DispatchQueue.main)
 			.sink(receiveCompletion: { [weak self] completion in
-				if case .failure(let error) = completion {
-					print("Error fetching pokedex: \(error)")
+				if case .failure(_) = completion {
 					self?.fetchLocalPokedex()
 				}
 			}, receiveValue: { [weak self] pokedex in
@@ -72,7 +70,7 @@ final class PokemonListViewController: UITableViewController {
 					self.tableView.reloadData()
 				}
 			case .failure(let error):
-				print("show some error message: \(error)")
+				showAlert(title: "Ups!", message: error.localizedDescription)
 			}
 		}
 	}
@@ -94,9 +92,13 @@ final class PokemonListViewController: UITableViewController {
 					self.tableView.reloadData()
 				}
 			case .failure(let error):
-				print("show some error message: \(error)")
+				showAlert(title: "Ups!", message: error.localizedDescription)
 			}
 		}
+	}
+	
+	private func showAlert(title: String, message: String) {
+		router.presentAlert(title: title, message: message)
 	}
 	
 	override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

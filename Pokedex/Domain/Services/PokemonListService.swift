@@ -6,7 +6,6 @@
 //
 
 import Combine
-import UIKit
 import CoreData
 
 typealias fetchPokedexCompletion = (Result<[PokemonEntry], FetchError>) -> Void
@@ -35,12 +34,14 @@ class PokemonListService: PokemonListServiceProtocol {
 		return URLSession.shared.dataTaskPublisher(for: url)
 			.map(\.data)
 			.decode(type: PokedexResponse.self, decoder: JSONDecoder())
-			.receive(on: DispatchQueue.main)
+			.map { response -> PokedexResponse in
+				let limitedEntries = Array(response.pokemonEntries.prefix(150))
+				return PokedexResponse(pokemonEntries: limitedEntries)
+			}
 			.flatMap { [weak self] response -> AnyPublisher<PokedexResponse, Error> in
 				guard let self = self else {
 					return Fail(error: URLError(.unknown)).eraseToAnyPublisher()
 				}
-				
 				return self.savePokedexWithImages(entries: response.pokemonEntries)
 					.map { _ in response }
 					.eraseToAnyPublisher()
@@ -57,88 +58,108 @@ class PokemonListService: PokemonListServiceProtocol {
 				}
 				
 				let context = self.coreDataManager.container.viewContext
+				let imagePublishers = self.getImagePublishers(for: entries)
 				
-				context.performAndWait {
-					let fetchRequest: NSFetchRequest<PokemonEntry> = PokemonEntry.fetchRequest()
-					
-					do {
-						let existingEntries = try context.fetch(fetchRequest)
-						let existingDict = Dictionary(uniqueKeysWithValues: existingEntries.map {
-							(Int($0.entryNumber), $0)
-						})
-						
-						let imagePublishers = entries.map { entry -> AnyPublisher<(PokemonEntryResponse, UIImage?), Error> in
-							return self.fetchPokemonImage(for: entry.entryNumber)
-								.map { image in (entry, image) }
-								.catch { error -> AnyPublisher<(PokemonEntryResponse, UIImage?), Error> in
-									return Just((entry, nil))
-										.setFailureType(to: Error.self)
-										.eraseToAnyPublisher()
+				Publishers.MergeMany(imagePublishers)
+					.collect()
+					.sink(
+						receiveCompletion: { completion in
+							if case .failure(let error) = completion {
+								promise(.failure(error))
+							}
+						},
+						receiveValue: { results in
+							context.performAndWait {
+								do {
+									let fetchRequest: NSFetchRequest<PokemonEntry> = PokemonEntry.fetchRequest()
+									let existingEntries = try context.fetch(fetchRequest)
+									let existingDict = Dictionary(uniqueKeysWithValues: existingEntries.map {
+										(Int($0.entryNumber), $0)
+									})
+									
+									for (entry, image) in results {
+										if let existingEntry = existingDict[entry.entryNumber] {
+											self.updateExistingEntry(existingEntry,
+																imageData: image,
+																in: context,
+																with: entry)
+										} else {
+											self.createNewEntry(imageData: image,
+																in: context,
+																with: entry)
+										}
+									}
+									if context.hasChanges {
+										try context.save()
+									}
+									promise(.success(()))
+								} catch {
+									promise(.failure(error))
 								}
-								.eraseToAnyPublisher()
+							}
 						}
-						
-						Publishers.MergeMany(imagePublishers)
-							.collect()
-							.sink(
-								receiveCompletion: { completion in
-									if case .failure(let error) = completion {
-										promise(.failure(error))
-									}
-								},
-								receiveValue: { results in
-									context.performAndWait {
-										for (entry, image) in results {
-											if let existingEntry = existingDict[entry.entryNumber] {
-												if existingEntry.pokemonSpecies == nil {
-													let species = PokemonSpecies(context: context)
-													species.update(from: entry.pokemonSpecies)
-													existingEntry.pokemonSpecies = species
-												} else {
-													existingEntry.pokemonSpecies?.update(from: entry.pokemonSpecies)
-												}
-												
-												if let image = image {
-													self.saveImage(image, for: existingEntry)
-												}
-											} else {
-												let newEntry = PokemonEntry(context: context)
-												newEntry.entryNumber = Int32(entry.entryNumber)
-												
-												let species = PokemonSpecies(context: context)
-												species.name = entry.pokemonSpecies.name
-												species.url = entry.pokemonSpecies.url
-												newEntry.pokemonSpecies = species
-												
-												if let image = image {
-													self.saveImage(image, for: newEntry)
-												}
-											}
-										}
-										
-										do {
-											if context.hasChanges {
-												try context.save()
-											}
-											promise(.success(()))
-										} catch {
-											promise(.failure(error))
-										}
-									}
-								}
-							)
-							.store(in: &self.cancellables)
-						
-					} catch {
-						promise(.failure(error))
-					}
-				}
+					)
+					.store(in: &self.cancellables)
 			}
 		}.eraseToAnyPublisher()
 	}
 	
-	private func saveImage(_ image: UIImage, for entry: PokemonEntry) {
-		guard let imageData = image.pngData(),
+	private func getImagePublishers(for entries: [PokemonEntryResponse]) -> [AnyPublisher<(PokemonEntryResponse, 
+																						   Data?),
+																			 Error>] {
+		entries.map { [weak self] entry -> AnyPublisher<(PokemonEntryResponse,
+											 Data?), Error> in
+			guard let self = self else {
+				return Just((entry, nil))
+					.setFailureType(to: Error.self)
+					.eraseToAnyPublisher()
+			}
+			return self.fetchPokemonImage(for: entry.entryNumber)
+				.map { image in (entry, image) }
+				.catch { error -> AnyPublisher<(PokemonEntryResponse, Data?), Error> in
+					return Just((entry, nil))
+						.setFailureType(to: Error.self)
+						.eraseToAnyPublisher()
+				}
+				.eraseToAnyPublisher()
+		}
+	}
+	
+	private func updateExistingEntry(_ existingEntry: PokemonEntry,
+									 imageData: Data?,
+									 in context: NSManagedObjectContext,
+									 with entry: PokemonEntryResponse) {
+		if existingEntry.pokemonSpecies == nil {
+			let species = PokemonSpecies(context: context)
+			species.update(from: entry.pokemonSpecies)
+			existingEntry.pokemonSpecies = species
+		} else {
+			existingEntry.pokemonSpecies?.update(from: entry.pokemonSpecies)
+		}
+		
+		if let imageData = imageData {
+			self.saveImage(imageData, for: existingEntry)
+		}
+	}
+	
+	private func createNewEntry(imageData: Data?,
+						in context: NSManagedObjectContext,
+						with entry: PokemonEntryResponse) {
+		let newEntry = PokemonEntry(context: context)
+		newEntry.entryNumber = Int32(entry.entryNumber)
+		
+		let species = PokemonSpecies(context: context)
+		species.name = entry.pokemonSpecies.name
+		species.url = entry.pokemonSpecies.url
+		newEntry.pokemonSpecies = species
+		
+		if let imageData = imageData {
+			self.saveImage(imageData, for: newEntry)
+		}
+	}
+	
+	private func saveImage(_ image: Data?, for entry: PokemonEntry) {
+		guard let imageData = image,
 			  let documentsDirectory = FileManager.default.urls(for: .documentDirectory,
 																in: .userDomainMask).first else {
 			return
@@ -151,11 +172,11 @@ class PokemonListService: PokemonListServiceProtocol {
 			try imageData.write(to: fileURL)
 			entry.imagePath = fileName
 		} catch {
-			print("Error saving image: \(error)")
+			entry.imagePath = nil
 		}
 	}
 	
-	private func fetchPokemonImage(for pokemonId: Int) -> AnyPublisher<UIImage, Error> {
+	private func fetchPokemonImage(for pokemonId: Int) -> AnyPublisher<Data, Error> {
 		let imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/\(pokemonId).png"
 		
 		guard let url = URL(string: imageUrl) else {
@@ -163,13 +184,7 @@ class PokemonListService: PokemonListServiceProtocol {
 		}
 		
 		return URLSession.shared.dataTaskPublisher(for: url)
-			.map(\.data)
-			.tryMap { data in
-				guard let image = UIImage(data: data) else {
-					throw URLError(.badServerResponse)
-				}
-				return image
-			}
+			.tryMap(\.data)
 			.eraseToAnyPublisher()
 	}
 	
@@ -198,7 +213,7 @@ class PokemonListService: PokemonListServiceProtocol {
 			let searchResults = try coreDataManager.container.viewContext.fetch(fetchRequest)
 			completion(.success(searchResults))
 		} catch {
-			print("Error filtering: \(error)")
+			completion(.failure(.dataFetchError))
 		}
 	}
 }

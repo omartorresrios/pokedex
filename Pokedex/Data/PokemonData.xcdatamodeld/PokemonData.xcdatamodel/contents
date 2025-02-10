@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22522" systemVersion="23E224" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
     <entity name="Pokedex" representedClassName="Pokedex" syncable="YES" codeGenerationType="class">
-        <relationship name="pokemonEntries" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PokemonEntry" inverseName="pokedex" inverseEntity="PokemonEntry"/>
+        <relationship name="pokemonEntries" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="PokemonEntry" inverseName="pokedex" inverseEntity="PokemonEntry"/>
     </entity>
     <entity name="PokemonDetails" representedClassName="PokemonDetails" syncable="YES" codeGenerationType="class">
         <attribute name="id" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="name" optional="YES" attributeType="String"/>
-        <relationship name="moves" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PokemonMove"/>
+        <relationship name="moves" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PokemonMove" inverseName="pokemonDetails" inverseEntity="PokemonMove"/>
         <relationship name="sprites" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PokemonSprites" inverseName="pokemon" inverseEntity="PokemonSprites"/>
-        <relationship name="stats" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PokemonStat"/>
-        <relationship name="types" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PokemonType"/>
+        <relationship name="stats" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PokemonStat" inverseName="pokemonDetails" inverseEntity="PokemonStat"/>
+        <relationship name="types" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PokemonType" inverseName="pokemonDetails" inverseEntity="PokemonType"/>
     </entity>
     <entity name="PokemonEntry" representedClassName="PokemonEntry" syncable="YES" codeGenerationType="class">
         <attribute name="entryNumber" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
@@ -19,6 +19,7 @@
     </entity>
     <entity name="PokemonMove" representedClassName="PokemonMove" syncable="YES" codeGenerationType="class">
         <relationship name="move" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PokemonMoveDetails"/>
+        <relationship name="pokemonDetails" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PokemonDetails" inverseName="moves" inverseEntity="PokemonDetails"/>
     </entity>
     <entity name="PokemonMoveDetails" representedClassName="PokemonMoveDetails" syncable="YES" codeGenerationType="class">
         <attribute name="name" optional="YES" attributeType="String"/>
@@ -34,12 +35,14 @@
     </entity>
     <entity name="PokemonStat" representedClassName="PokemonStat" syncable="YES" codeGenerationType="class">
         <attribute name="baseStat" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="pokemonDetails" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PokemonDetails" inverseName="stats" inverseEntity="PokemonDetails"/>
         <relationship name="stat" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PokemonStatDetails"/>
     </entity>
     <entity name="PokemonStatDetails" representedClassName="PokemonStatDetails" syncable="YES" codeGenerationType="class">
         <attribute name="name" optional="YES" attributeType="String"/>
     </entity>
     <entity name="PokemonType" representedClassName="PokemonType" syncable="YES" codeGenerationType="class">
+        <relationship name="pokemonDetails" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PokemonDetails" inverseName="types" inverseEntity="PokemonDetails"/>
         <relationship name="type" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PokemonTypeDetail"/>
     </entity>
     <entity name="PokemonTypeDetail" representedClassName="PokemonTypeDetail" syncable="YES" codeGenerationType="class">

@@ -16,11 +16,13 @@ extension PokemonSpecies {
 
 enum FetchError: Error, LocalizedError {
 	case dataFetchError
+	case pokemonNotFound
 	
 	var errorDescription: String? {
 		switch self {
 		case .dataFetchError:
 			return "Failed to fetch data."
+		case .pokemonNotFound: return "Pokemon not found in local database."
 		}
 	}
 }
