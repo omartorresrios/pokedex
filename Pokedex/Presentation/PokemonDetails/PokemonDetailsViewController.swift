@@ -20,6 +20,11 @@ final class PokemonDetailsViewController: UIViewController {
 	private let pokemonTypeLabel = UILabel()
 	private let pokemonStatsLabel = UILabel()
 	private let pokemonMovesLabel = UILabel()
+	
+	private var typeStackView = UIStackView()
+	private var statsStackView = UIStackView()
+	private var movesStackView = UIStackView()
+	
 	private var cancellables: Set<AnyCancellable> = []
 	
 	init(viewModel: PokemonDetailsViewModel,
@@ -90,17 +95,17 @@ final class PokemonDetailsViewController: UIViewController {
 		let typeLabel = UILabel()
 		typeLabel.font = .systemFont(ofSize: 20, weight: .semibold)
 		typeLabel.text = "Type:"
-		let typeStackView = vstack(views: [typeLabel, pokemonTypeLabel], spacing: 5)
+		typeStackView = vstack(views: [typeLabel, pokemonTypeLabel], spacing: 5)
 		
 		let statsLabel = UILabel()
 		statsLabel.font = .systemFont(ofSize: 20, weight: .semibold)
 		statsLabel.text = "Stats:"
-		let statsStackView = vstack(views: [statsLabel, pokemonStatsLabel], spacing: 5)
+		statsStackView = vstack(views: [statsLabel, pokemonStatsLabel], spacing: 5)
 		
 		let movesLabel = UILabel()
 		movesLabel.font = .systemFont(ofSize: 20, weight: .semibold)
 		movesLabel.text = "Moves:"
-		let movesStackView = vstack(views: [movesLabel, pokemonMovesLabel], spacing: 5)
+		movesStackView = vstack(views: [movesLabel, pokemonMovesLabel], spacing: 5)
 		
 		let detailsStackView = vstack(views: [typeStackView, statsStackView, movesStackView], spacing: 15)
 		contentView.addSubview(detailsStackView)
@@ -151,9 +156,12 @@ final class PokemonDetailsViewController: UIViewController {
 		viewModel.fetchPokemonDetails(for: pokemonId)
 			.receive(on: DispatchQueue.main)
 			.sink(receiveCompletion: { [weak self] completion in
-				if case .failure(_) = completion {
-					self?.fetchLocalPokemonDetails()
-				}
+				switch completion {
+					case .failure(let error):
+						self?.fetchLocalPokemonDetails()
+					case .finished:
+						break
+					}
 			}, receiveValue: { [weak self] pokemonDetails in
 				self?.fetchLocalPokemonDetails()
 			})
@@ -167,6 +175,7 @@ final class PokemonDetailsViewController: UIViewController {
 			case .success(let pokemon):
 				self.configureUI(with: pokemon)
 			case .failure(let error):
+				hideStackViews()
 				showAlert(title: "Ups!", message: error.localizedDescription)
 			}
 		}
@@ -197,7 +206,11 @@ final class PokemonDetailsViewController: UIViewController {
 															   keyPath: \PokemonMove.move?.name)
 	}
 	
-	
+	private func hideStackViews() {
+		typeStackView.isHidden = true
+		statsStackView.isHidden = true
+		movesStackView.isHidden = true
+	}
 	
 	private func showAlert(title: String, message: String) {
 		router.presentAlert(title: title,  message: message)

@@ -172,7 +172,7 @@ class PokemonListService: PokemonListServiceProtocol {
 			try imageData.write(to: fileURL)
 			entry.imagePath = fileName
 		} catch {
-			print("Error saving image: \(error)")
+			entry.imagePath = nil
 		}
 	}
 	

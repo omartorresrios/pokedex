@@ -33,6 +33,8 @@ final class NavigationControllerRouter: Router {
 	
 	func presentAlert(title: String, message: String) {
 		let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+		let closeButton = UIAlertAction(title: "Close", style: .cancel)
+		alert.addAction(closeButton)
 		navigationController.present(alert, animated: true, completion: nil)
 	}
 }

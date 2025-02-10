@@ -32,12 +32,12 @@ final class PokemonDetailsService: PokemonDetailsServiceProtocol {
 			.map(\.data)
 			.decode(type: PokemonDetailsResponse.self, decoder: JSONDecoder())
 			.handleEvents(receiveOutput: { [weak self] response in
-				self?.savePokemonDetailsToCoreData(response)
+				try? self?.savePokemonDetailsToCoreData(response)
 			})
 			.eraseToAnyPublisher()
 	}
 
-	private func savePokemonDetailsToCoreData(_ response: PokemonDetailsResponse) {
+	private func savePokemonDetailsToCoreData(_ response: PokemonDetailsResponse) throws {
 		let context = coreDataManager.container.viewContext
 		
 		let fetchRequest: NSFetchRequest<PokemonDetails> = PokemonDetails.fetchRequest()
@@ -80,7 +80,7 @@ final class PokemonDetailsService: PokemonDetailsServiceProtocol {
 			}
 			try context.save()
 		} catch {
-			print("Error saving Pokemon details: \(error)")
+			throw error
 		}
 	}
 	
@@ -92,8 +92,11 @@ final class PokemonDetailsService: PokemonDetailsServiceProtocol {
 		
 		context.perform {
 			do {
-				if let pokemon = try context.fetch(fetchRequest).first {
+				let results = try context.fetch(fetchRequest)
+				if let pokemon = results.first {
 					completion(.success(pokemon))
+				} else {
+					completion(.failure(.pokemonNotFound))
 				}
 			} catch {
 				completion(.failure(.dataFetchError))
