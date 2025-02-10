@@ -107,7 +107,13 @@ class PokemonListService: PokemonListServiceProtocol {
 	private func getImagePublishers(for entries: [PokemonEntryResponse]) -> [AnyPublisher<(PokemonEntryResponse, 
 																						   Data?),
 																			 Error>] {
-		entries.map { entry -> AnyPublisher<(PokemonEntryResponse, Data?), Error> in
+		entries.map { [weak self] entry -> AnyPublisher<(PokemonEntryResponse,
+											 Data?), Error> in
+			guard let self = self else {
+				return Just((entry, nil))
+					.setFailureType(to: Error.self)
+					.eraseToAnyPublisher()
+			}
 			return self.fetchPokemonImage(for: entry.entryNumber)
 				.map { image in (entry, image) }
 				.catch { error -> AnyPublisher<(PokemonEntryResponse, Data?), Error> in
