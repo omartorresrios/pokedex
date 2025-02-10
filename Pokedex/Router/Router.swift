@@ -9,6 +9,7 @@ import UIKit
 
 protocol Router {
 	func showPostDetailsView(pokemonId: String, pokemonImagePath: String?)
+	func presentAlert(title: String, message: String)
 }
 
 final class NavigationControllerRouter: Router {
@@ -23,9 +24,15 @@ final class NavigationControllerRouter: Router {
 	
 	func showPostDetailsView(pokemonId: String, pokemonImagePath: String?) {
 		let viewModel = PokemonDetailsViewModel(service: pokemonDetailsService)
-		let pokemonDetailsViewController = PokemonDetailsViewController(viewModel: viewModel,
+		let pokemonDetailsViewController = PokemonDetailsViewController(viewModel: viewModel, 
+																		router: self,
 																		pokemonId: pokemonId,
 																		pokemonImagePath: pokemonImagePath)
 		navigationController.pushViewController(pokemonDetailsViewController, animated: true)
+	}
+	
+	func presentAlert(title: String, message: String) {
+		let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+		navigationController.present(alert, animated: true, completion: nil)
 	}
 }

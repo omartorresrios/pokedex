@@ -10,20 +10,22 @@ import Combine
 
 final class PokemonDetailsViewController: UIViewController {
 	private let viewModel: PokemonDetailsViewModel
+	private let router: Router
 	private let pokemonId: String
 	private let pokemonImagePath: String?
-	private var cancellables: Set<AnyCancellable> = []
-	
 	private let pokemonImageView = UIImageView()
 	private let pokemonNameLabel = UILabel()
 	private let pokemonTypeLabel = UILabel()
 	private let pokemonStatsLabel = UILabel()
 	private let pokemonMovesLabel = UILabel()
+	private var cancellables: Set<AnyCancellable> = []
 	
 	init(viewModel: PokemonDetailsViewModel,
+		 router: Router,
 		 pokemonId: String,
 		 pokemonImagePath: String?) {
 		self.viewModel = viewModel
+		self.router = router
 		self.pokemonId = pokemonId
 		self.pokemonImagePath = pokemonImagePath
 		super.init(nibName: nil, bundle: nil)
@@ -89,8 +91,7 @@ final class PokemonDetailsViewController: UIViewController {
 		viewModel.fetchPokemonDetails(for: pokemonId)
 			.receive(on: DispatchQueue.main)
 			.sink(receiveCompletion: { [weak self] completion in
-				if case .failure(let error) = completion {
-					print("Error fetching pokemon details: \(error)")
+				if case .failure(_) = completion {
 					self?.fetchLocalPokemonDetails()
 				}
 			}, receiveValue: { [weak self] pokemonDetails in
@@ -106,7 +107,7 @@ final class PokemonDetailsViewController: UIViewController {
 			case .success(let pokemon):
 				self.configureUI(with: pokemon)
 			case .failure(let error):
-				print("show some error message: \(error)")
+				showAlert(title: "Ups!", message: error.localizedDescription)
 			}
 		}
 	}
@@ -146,5 +147,9 @@ final class PokemonDetailsViewController: UIViewController {
 		} else {
 			pokemonMovesLabel.text = "Moves: N/A"
 		}
+	}
+	
+	private func showAlert(title: String, message: String) {
+		router.presentAlert(title: title,  message: message)
 	}
 }

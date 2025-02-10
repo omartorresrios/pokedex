@@ -78,11 +78,11 @@
 		245C17E82D56400B0080B7DB /* Pokedex */ = {
 			isa = PBXGroup;
 			children = (
-				245C181E2D590B6A0080B7DB /* Router */,
 				245C17E92D56400B0080B7DB /* AppDelegate.swift */,
 				245C17EB2D56400B0080B7DB /* SceneDelegate.swift */,
 				245C18072D564DEB0080B7DB /* PokemonList */,
 				245C180E2D566E150080B7DB /* PokemonDetails */,
+				245C181E2D590B6A0080B7DB /* Router */,
 				245C18042D564DB20080B7DB /* Service */,
 				245C18032D564D9D0080B7DB /* Models */,
 				245C18182D58F2F80080B7DB /* Helpers.swift */,
