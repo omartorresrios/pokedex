@@ -22,4 +22,22 @@ final class PokemonDetailsViewModel {
 								  completion: @escaping FetchPokemonDetailsCompletion) {
 		service.fetchLocalPokemonDetails(with: id, completion: completion)
 	}
+	
+	func uniqueBulletedItems<T>(from collection: Set<T>?,
+										keyPath: KeyPath<T, String?>,
+										transform: ((T) -> String?)? = nil) -> String {
+		guard let collection = collection else {
+			return "N/A"
+		}
+		
+		let uniqueItems = Array(Set(collection.compactMap { item in
+			if let transform = transform {
+				return transform(item)
+			} else {
+				return item[keyPath: keyPath]
+			}
+		}))
+		
+		return uniqueItems.map { "• \(String($0))" }.joined(separator: "\n")
+	}
 }

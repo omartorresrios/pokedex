@@ -13,6 +13,8 @@ final class PokemonDetailsViewController: UIViewController {
 	private let router: Router
 	private let pokemonId: String
 	private let pokemonImagePath: String?
+	
+	private let scrollView = UIScrollView()
 	private let pokemonImageView = UIImageView()
 	private let pokemonNameLabel = UILabel()
 	private let pokemonTypeLabel = UILabel()
@@ -43,48 +45,106 @@ final class PokemonDetailsViewController: UIViewController {
 	
 	private func setupUI() {
 		view.backgroundColor = .white
-		view.addSubview(pokemonImageView)
-		view.addSubview(pokemonNameLabel)
-		view.addSubview(pokemonTypeLabel)
-		view.addSubview(pokemonStatsLabel)
-		view.addSubview(pokemonMovesLabel)
-		
+		let contentView = UIView()
+		contentView.translatesAutoresizingMaskIntoConstraints = false
+		setupScrollView(with: contentView)
+		translateAutoresizingMasks()
+		setupContentView(contentView)
+		setupStyles()
+	}
+	
+	private func setupScrollView(with contentView: UIView) {
+		view.addSubview(scrollView)
+		NSLayoutConstraint.activate([
+			scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+			scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+			scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+			scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
+		])
+		scrollView.addSubview(contentView)
+	}
+	
+	private func translateAutoresizingMasks() {
+		scrollView.translatesAutoresizingMaskIntoConstraints = false
 		pokemonImageView.translatesAutoresizingMaskIntoConstraints = false
 		pokemonNameLabel.translatesAutoresizingMaskIntoConstraints = false
 		pokemonTypeLabel.translatesAutoresizingMaskIntoConstraints = false
 		pokemonStatsLabel.translatesAutoresizingMaskIntoConstraints = false
 		pokemonMovesLabel.translatesAutoresizingMaskIntoConstraints = false
-		
+	}
+	
+	private func setupContentView(_ contentView: UIView) {
 		NSLayoutConstraint.activate([
-			pokemonImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-			pokemonImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-			pokemonImageView.widthAnchor.constraint(equalToConstant: 100),
-			pokemonImageView.heightAnchor.constraint(equalToConstant: 100),
-			
-			pokemonNameLabel.topAnchor.constraint(equalTo: pokemonImageView.bottomAnchor, constant: 20),
-			pokemonNameLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-			pokemonNameLabel.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
-			
-			pokemonTypeLabel.topAnchor.constraint(equalTo: pokemonNameLabel.bottomAnchor, constant: 10),
-			pokemonTypeLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-			pokemonTypeLabel.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
-			
-			pokemonStatsLabel.topAnchor.constraint(equalTo: pokemonTypeLabel.bottomAnchor, constant: 10),
-			pokemonStatsLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-			pokemonStatsLabel.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
-			
-			pokemonMovesLabel.topAnchor.constraint(equalTo: pokemonStatsLabel.bottomAnchor, constant: 10),
-			pokemonMovesLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-			pokemonMovesLabel.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
-			pokemonMovesLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+			contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+			contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+			contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+			contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+			contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
 		])
 		
-		pokemonNameLabel.font = .systemFont(ofSize: 24, weight: .bold)
-		pokemonTypeLabel.font = .systemFont(ofSize: 18)
-		pokemonStatsLabel.font = .systemFont(ofSize: 18)
-		pokemonMovesLabel.font = .systemFont(ofSize: 18)
+		let imageAndNameStackView = vstack(views: [pokemonImageView, pokemonNameLabel],
+										   spacing: 5,
+										   alignment: .center)
+		contentView.addSubview(imageAndNameStackView)
 		
+		let typeLabel = UILabel()
+		typeLabel.font = .systemFont(ofSize: 20, weight: .semibold)
+		typeLabel.text = "Type:"
+		let typeStackView = vstack(views: [typeLabel, pokemonTypeLabel], spacing: 5)
+		
+		let statsLabel = UILabel()
+		statsLabel.font = .systemFont(ofSize: 20, weight: .semibold)
+		statsLabel.text = "Stats:"
+		let statsStackView = vstack(views: [statsLabel, pokemonStatsLabel], spacing: 5)
+		
+		let movesLabel = UILabel()
+		movesLabel.font = .systemFont(ofSize: 20, weight: .semibold)
+		movesLabel.text = "Moves:"
+		let movesStackView = vstack(views: [movesLabel, pokemonMovesLabel], spacing: 5)
+		
+		let detailsStackView = vstack(views: [typeStackView, statsStackView, movesStackView], spacing: 15)
+		contentView.addSubview(detailsStackView)
+		
+		NSLayoutConstraint.activate([
+			imageAndNameStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
+			imageAndNameStackView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+			imageAndNameStackView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.8),
+			
+			pokemonImageView.widthAnchor.constraint(equalToConstant: 150),
+			pokemonImageView.heightAnchor.constraint(equalToConstant: 150),
+			
+			detailsStackView.topAnchor.constraint(equalTo: imageAndNameStackView.bottomAnchor, constant: 20),
+			detailsStackView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+			detailsStackView.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: 0.8),
+			detailsStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+		])
+	}
+	
+	private func setupStyles() {
+		pokemonNameLabel.font = .systemFont(ofSize: 24, weight: .bold)
+		pokemonNameLabel.numberOfLines = 0
+		pokemonTypeLabel.font = .systemFont(ofSize: 18)
+		pokemonTypeLabel.numberOfLines = 0
+		pokemonStatsLabel.font = .systemFont(ofSize: 18)
+		pokemonStatsLabel.numberOfLines = 0
+		pokemonMovesLabel.font = .systemFont(ofSize: 18)
+		pokemonMovesLabel.numberOfLines = 0
 		pokemonImageView.contentMode = .scaleAspectFit
+	}
+	
+	private func vstack(views: [UIView], 
+						spacing: CGFloat,
+						alignment: UIStackView.Alignment = .leading) -> UIStackView {
+		let vstack = UIStackView()
+		vstack.axis = .vertical
+		vstack.spacing = spacing
+		vstack.alignment = alignment
+		vstack.translatesAutoresizingMaskIntoConstraints = false
+		for view in views {
+			view.translatesAutoresizingMaskIntoConstraints = false
+			vstack.addArrangedSubview(view)
+		}
+		return vstack
 	}
 	
 	private func fetchRemotePokemonDetails() {
@@ -124,30 +184,20 @@ final class PokemonDetailsViewController: UIViewController {
 			}
 		}
 		
-		if let types = pokemonDetails.types as? Set<PokemonType> {
-			let typeNames = types.compactMap { $0.type?.name }
-			pokemonTypeLabel.text = "Types: \(typeNames.joined(separator: ", "))"
-		} else {
-			pokemonTypeLabel.text = "Types: N/A"
-		}
-		
-		if let stats = pokemonDetails.stats as? Set<PokemonStat> {
-			let statDescriptions = stats.compactMap { stat -> String? in
-				guard let name = stat.stat?.name else { return nil }
-				return "\(name): \(stat.baseStat)"
-			}
-			pokemonStatsLabel.text = "Stats: \(statDescriptions.joined(separator: ", "))"
-		} else {
-			pokemonStatsLabel.text = "Stats: N/A"
+		pokemonTypeLabel.text = viewModel.uniqueBulletedItems(from: pokemonDetails.types as? Set<PokemonType>,
+															  keyPath: \PokemonType.type?.name)
+
+		pokemonStatsLabel.text = viewModel.uniqueBulletedItems(from: pokemonDetails.stats as? Set<PokemonStat>,
+															   keyPath: \PokemonStat.stat?.name) { stat in
+			guard let name = stat.stat?.name else { return nil }
+			return "\(name): \(stat.baseStat)"
 		}
 
-		if let moves = pokemonDetails.moves as? Set<PokemonMove> {
-			let moveNames = moves.compactMap { $0.move?.name }
-			pokemonMovesLabel.text = "Moves: \(moveNames.joined(separator: ", "))"
-		} else {
-			pokemonMovesLabel.text = "Moves: N/A"
-		}
+		pokemonMovesLabel.text = viewModel.uniqueBulletedItems(from: pokemonDetails.moves as? Set<PokemonMove>,
+															   keyPath: \PokemonMove.move?.name)
 	}
+	
+	
 	
 	private func showAlert(title: String, message: String) {
 		router.presentAlert(title: title,  message: message)
